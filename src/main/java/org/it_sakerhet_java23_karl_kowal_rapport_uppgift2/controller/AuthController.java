@@ -4,10 +4,14 @@ import jakarta.servlet.http.HttpSession;
 import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.entitys.UserEntity;
 import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 public class AuthController {
@@ -42,14 +46,17 @@ public class AuthController {
             return "register";
         }
     }
-
     @PostMapping("/login")
-    public String login(Model model, String password, String email,HttpSession session){
-        boolean auth = userService.loginUser(email,password,session);
-        if(auth){
-            return "sidan som man ska kunna se sina meddelande";
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest,HttpSession session) {
+        String email = loginRequest.get("email");
+        String password = loginRequest.get("password");
+        String jwt = userService.loginUser(email, password,session);
+        if (jwt != null && !jwt.isEmpty()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("token", jwt);
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Inloggning misslyckades");
         }
-        model.addAttribute("message","Wrong email or password!");
-        return "login";
     }
 }

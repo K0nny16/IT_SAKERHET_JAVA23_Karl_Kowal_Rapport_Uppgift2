@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skriv Meddelande</title>
+    <link rel="stylesheet" href="/writeMessage.css">
+</head>
+<body>
+<nav>
+    <button id="logout-btn">Logga ut</button>
+    <button id="messages-btn">Meddelanden</button>
+    <button id="write-btn">Skriv Meddelande</button>
+</nav>
+
+<h1>Skriv ett nytt meddelande</h1>
+<form id="message-form">
+    <label for="message">Meddelande:</label><br>
+    <textarea id="message" name="message" rows="4" cols="50"></textarea><br><br>
+    <button type="submit">Skicka Meddelande</button>
+</form>
+<script type="module" src="/js/writeMessage.js"></script>
+</body>
+</html>
