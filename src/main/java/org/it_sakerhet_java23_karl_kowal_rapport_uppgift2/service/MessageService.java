@@ -21,29 +21,34 @@ public class MessageService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
     private KeyStoreUtil keyStoreUtil;
 
-    public boolean saveMessage(MessageDTO messageDTO, String username ){
+    public boolean saveMessage(MessageDTO messageDTO, String username ) throws Exception {
         UserEntity userEntity = userRepository.findByUsername(username);
         if(userEntity == null) return false;
-        String decryptedKey = keyStoreUtil.decryptKey(userEntity.getEncryptedKey());
-        String encryptedContent = keyStoreUtil.encryptText(messageDTO.getContent(),decryptedKey);
+        String decryptedKey = keyStoreUtil.decryptUserSecretKey(userEntity.getEncryptedKey());
+        String encryptedContent = keyStoreUtil.encryptMessage(messageDTO.getContent(),decryptedKey);
         MessagesEntity messagesEntity = new MessagesEntity();
         messagesEntity.setMessageContent(encryptedContent);
         messagesEntity.setUser(userEntity);
         messageRepository.save(messagesEntity);
         return true;
     }
-    public List<MessageDTO> getMessagesForUser(String username){
+    public List<MessageDTO> getMessagesForUser(String username) throws Exception {
         UserEntity userEntity = userRepository.findByUsername(username);
         if(userEntity == null) return null;
-        String decryptedKey = keyStoreUtil.decryptKey(userEntity.getEncryptedKey());
+        String decryptedKey = keyStoreUtil.decryptUserSecretKey(userEntity.getEncryptedKey());
         return messageRepository.findByUser(userEntity).stream()
-                .map(message -> new MessageDTO(
-                        (long) message.getId(),
-                        keyStoreUtil.decryptText(message.getMessageContent(),decryptedKey)
-                ))
+                .map(message -> {
+                    try {
+                        return new MessageDTO(
+                                (long) message.getId(),
+                                keyStoreUtil.decryptMessage(message.getMessageContent(),decryptedKey)
+                        );
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .collect(Collectors.toList());
     }
     public boolean deleteMessage(int messageId,String username){

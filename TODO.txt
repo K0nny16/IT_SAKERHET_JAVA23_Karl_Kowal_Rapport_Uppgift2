@@ -1,7 +1,0 @@
-Inlogg och registrering är klar!
-
-Saker som ska göras:
-1:Lägg till en key till användaren när den läggs till i DB
-2:Kryptera nyckeln och spara den med java keystore(Krypterar den vi skyckar upp och behåller en "master key" lokalt)
-3:Posta meddelande till DB
-4:Hämta och ge användaren möjlighet att tabort dom.(a.k.a msg)

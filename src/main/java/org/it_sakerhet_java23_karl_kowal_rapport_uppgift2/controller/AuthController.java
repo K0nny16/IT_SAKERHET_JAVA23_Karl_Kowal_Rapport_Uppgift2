@@ -19,16 +19,15 @@ public class AuthController {
     private UserService userService;
 
     @GetMapping("/")
-    public String homePage(){
+    public String homePage(Model model){
+        model.addAttribute("user" ,new UserEntity());
         return "login";
     }
-
     @GetMapping("/logout")
     public String logout(HttpSession session){
         session.invalidate();
         return "redirect:/";
     }
-
     @GetMapping("/register")
     public String registerForm(Model model){
         model.addAttribute("user",new UserEntity());
@@ -40,23 +39,30 @@ public class AuthController {
         try{
             userService.registerUser(user);
             model.addAttribute("message","User added successfully!");
-            return "login";
+            return "redirect:/";
         }catch (IllegalArgumentException e){
             model.addAttribute("message",e.getMessage());
             return "register";
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest,HttpSession session) {
-        String email = loginRequest.get("email");
-        String password = loginRequest.get("password");
-        String jwt = userService.loginUser(email, password,session);
+    @PostMapping("/login-user")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> login(@RequestBody UserEntity user, HttpSession session) {
+        // Logga inkommande email och lösenord för felsökning
+        String email = user.getEmail();
+        String password = user.getPassword();
+        String jwt = userService.loginUser(email, password, session);
+
         if (jwt != null && !jwt.isEmpty()) {
             Map<String, String> response = new HashMap<>();
             response.put("token", jwt);
             return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Inloggning misslyckades");
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Inloggning misslyckades! Kontrollera dina uppgifter.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
 }

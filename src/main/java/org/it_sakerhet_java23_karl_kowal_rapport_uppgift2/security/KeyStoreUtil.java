@@ -1,90 +1,98 @@
 package org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.security;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.security.KeyStore;
 import java.util.Base64;
 
 @Component
 public class KeyStoreUtil {
 
-    //Hämtar dom olika attributerna från properties.
-    @Value("${keystore.location}")
-    private String keystoreLocation;
+    private final SecretKey rootKey;
 
-    @Value("${keystore.password}")
-    private String keystorePassword;
+    public KeyStoreUtil() {
+        try {
+            String keystorePath = "src/main/resources/encryption_keystore.p12";
+            String keystorePassword = "password123";
+            String alias = "encryptionkey";
 
-    @Value("${keystore.alias}")
-    private String keystoreAlias;
-
-    private final Key privateKey;
-
-    public KeyStoreUtil(){
-        try{
-            //Hämtar nyckel och kollar ifall den finns och har ett värde.
-            InputStream keystoreStream = getClass().getClassLoader().getResourceAsStream(keystoreLocation);
-            if(keystoreStream == null){
-                throw new RuntimeException("Keystore file not found!");
+            // Ladda keystoren och nyckeln
+            try (InputStream keyStoreFile = new FileInputStream(keystorePath)) {
+                this.rootKey = loadSecretKeyFromKeyStore(keyStoreFile, keystorePassword, alias);
             }
-            //Skapar en instans av keystore med PKCS12
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            //Laddar keystore filen.
-            keyStore.load(keystoreStream,keystorePassword.toCharArray());
-            privateKey = keyStore.getKey(keystoreAlias,keystorePassword.toCharArray());
-        }catch (Exception e){
-            e.printStackTrace();
-            throw new RuntimeException("Could not load key!");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load root key from KeyStore: " + e.getMessage(), e);
         }
     }
 
-    public String encryptKey(String key){
+    // Metod för att ladda SecretKey från keystore
+    private SecretKey loadSecretKeyFromKeyStore(InputStream keyStoreFile, String keyStorePassword, String keyAlias) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE,privateKey);
-            byte[] encryptedKey = cipher.doFinal(key.getBytes());
-            return Base64.getEncoder().encodeToString(encryptedKey);
-        }catch (Exception e){
-            throw new RuntimeException(e);
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            keyStore.load(keyStoreFile, keyStorePassword.toCharArray());
+            KeyStore.ProtectionParameter entryPassword = new KeyStore.PasswordProtection(keyStorePassword.toCharArray());
+            KeyStore.SecretKeyEntry secretKeyEntry = (KeyStore.SecretKeyEntry) keyStore.getEntry(keyAlias, entryPassword);
+            return secretKeyEntry.getSecretKey();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load SecretKey from KeyStore: " + e.getMessage(), e);
         }
     }
-    public String decryptKey(String encryptedKey){
-        try{
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE,privateKey);
-            byte[] decodedKey = Base64.getDecoder().decode(encryptedKey);
-            return new String(cipher.doFinal(decodedKey));
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
-    }
-    public String encryptText(String text, String decryptedKey){
+
+    // Metod för att kryptera användarens hemliga nyckel med root-nyckeln
+    public String encryptUserSecretKey(String userSecretKey) {
         try {
-            SecretKeySpec secretKey = new SecretKeySpec(decryptedKey.getBytes(StandardCharsets.UTF_8),"AES");
             Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.DECRYPT_MODE,secretKey);
-            byte[] encrypted = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(encrypted);
-        }catch (Exception e){
-            throw new RuntimeException("Could not encrypt text content",e);
+            cipher.init(Cipher.ENCRYPT_MODE, rootKey);
+            byte[] encryptedKeyBytes = cipher.doFinal(userSecretKey.getBytes());
+            return Base64.getEncoder().encodeToString(encryptedKeyBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to encrypt user secret key: " + e.getMessage(), e);
         }
     }
-    public String decryptText(String encryptedText,String decryptedKey){
+
+    // Metod för att dekryptera användarens hemliga nyckel med root-nyckeln
+    public String decryptUserSecretKey(String encryptedUserSecretKey) {
         try {
-            SecretKeySpec secretKey = new SecretKeySpec(decryptedKey.getBytes(StandardCharsets.UTF_8),"AES");
             Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.DECRYPT_MODE,secretKey);
-            byte[] decodedBytes = Base64.getDecoder().decode(encryptedText);
-            byte[] decryptedBytes = cipher.doFinal(decodedBytes);
-            return new String(decryptedBytes,StandardCharsets.UTF_8);
-        }catch (Exception e){
-            throw new RuntimeException("Could not decrypt text!",e);
+            cipher.init(Cipher.DECRYPT_MODE, rootKey);
+            byte[] decodedKeyBytes = Base64.getDecoder().decode(encryptedUserSecretKey);
+            byte[] decryptedKeyBytes = cipher.doFinal(decodedKeyBytes);
+            return new String(decryptedKeyBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to decrypt user secret key: " + e.getMessage(), e);
+        }
+    }
+
+    // Metoder för att kryptera och dekryptera användarmeddelanden
+    public String encryptMessage(String message, String secretKey) {
+        try {
+            SecretKey userSecretKey = new SecretKeySpec(secretKey.getBytes(), "AES");
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.ENCRYPT_MODE, userSecretKey);
+            byte[] encryptedMessageBytes = cipher.doFinal(message.getBytes());
+            return Base64.getEncoder().encodeToString(encryptedMessageBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to encrypt message: " + e.getMessage(), e);
+        }
+    }
+
+    public String decryptMessage(String encryptedMessage, String secretKey) {
+        try {
+            SecretKey userSecretKey = new SecretKeySpec(secretKey.getBytes(), "AES");
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.DECRYPT_MODE, userSecretKey);
+            byte[] decodedMessageBytes = Base64.getDecoder().decode(encryptedMessage);
+            byte[] decryptedMessageBytes = cipher.doFinal(decodedMessageBytes);
+            return new String(decryptedMessageBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to decrypt message: " + e.getMessage(), e);
         }
     }
 }

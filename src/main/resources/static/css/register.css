@@ -4,73 +4,61 @@ body {
     margin: 0;
     padding: 0;
 }
-
-h2 {
-    text-align: center;
-    color: #333;
-    margin-top: 30px;
-}
-
-form {
-    max-width: 400px;
+.container {
+    max-width: 500px;
     margin: 50px auto;
-    padding: 20px;
+    padding: 30px;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
 }
-
-form div {
-    margin-bottom: 15px;
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
 }
-
+.form-group {
+    margin-bottom: 20px;
+}
 label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
 }
-
 input[type="text"],
 input[type="password"],
 input[type="email"] {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     border: 1px solid #ddd;
     border-radius: 5px;
+    box-sizing: border-box;
+    margin-bottom: 10px;
 }
-
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+    border-color: #4CAF50;
+    outline: none;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
+}
 button {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     background-color: #4CAF50;
     color: white;
     border: none;
     border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
+    transition: background-color 0.3s;
 }
-
 button:hover {
     background-color: #45a049;
 }
-
-p {
-    text-align: center;
-    margin-top: 20px;
-}
-
-a {
-    color: #4CAF50;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
 .error-message {
     color: red;
     text-align: center;
-    margin-bottom: 20px;
+    margin-top: 20px;
 }

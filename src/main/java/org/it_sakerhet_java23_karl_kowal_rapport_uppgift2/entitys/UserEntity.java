@@ -29,7 +29,7 @@ public class UserEntity {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "encrypted_key")
+    @Column(name = "encrypted_key",columnDefinition = "TEXT")
     private String encryptedKey;
 
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)

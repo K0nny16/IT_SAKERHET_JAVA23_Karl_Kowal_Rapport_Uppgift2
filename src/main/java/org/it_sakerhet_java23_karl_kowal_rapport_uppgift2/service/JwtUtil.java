@@ -1,46 +1,53 @@
 package org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.dto.UserDTO;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class JwtUtil {
 
-    private final String secretKey;
+    private final Key secretKey;
+    public JwtUtil(String secret) {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
-    public JwtUtil(String secretKey){
-        this.secretKey = secretKey;
+    // Generera token med användarens information
+    public String generateToken(UserDTO userDTO) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, userDTO.getUsername());
     }
-    public String generateToken(UserDTO userDTO){
-       Map<String,Object> claims = new HashMap<>();
-       return createToken(claims,userDTO.getUsername());
-    }
-    private String createToken(Map<String,Object> claims,String subjekt){
+    // Skapa en JWT-token
+    private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(subjekt)
+                .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) //10H
-                .signWith(SignatureAlgorithm.HS256,secretKey)
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 timmar
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
-    public boolean validateToken(String token){
+    // Validera tokenen
+    public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
     }
-    public String extractUsername(String token){
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJwt(token).getBody().getSubject();
+    // Extrahera användarnamn från tokenen
+    public String extractUsername(String token) {
+        return getClaims(token).getSubject();
+    }
+    // Hämta claims från tokenen
+    private Claims getClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 }

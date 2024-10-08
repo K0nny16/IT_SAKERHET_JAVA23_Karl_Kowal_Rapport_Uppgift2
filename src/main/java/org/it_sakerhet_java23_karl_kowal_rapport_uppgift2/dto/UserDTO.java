@@ -3,9 +3,11 @@ package org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
-public class UserDTO {
+public class UserDTO implements Serializable {
     private Long id;
     private String encryptedKey;
     private String username;
