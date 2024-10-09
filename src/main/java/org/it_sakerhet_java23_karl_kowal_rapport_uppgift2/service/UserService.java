@@ -10,6 +10,7 @@ import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.security.KeyStoreUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.util.Base64;
 import java.util.UUID;
@@ -32,14 +33,23 @@ public class UserService {
             throw new IllegalArgumentException("Error! User with email already exists.");
         }
         String hashedPassword = hashing.hashPassword(user.getPassword());
-
-        // Kryptera användarens unika nyckel med root-nyckeln
-        SecretKey generteedSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-        String secretKey = Base64.getEncoder().encodeToString(generteedSecretKey.getEncoded());
-        String encryptedKey = keyStoreUtil.encryptUserSecretKey(secretKey);
-        user.setEncryptedKey(encryptedKey);
-        user.setPassword(hashedPassword);
-        userRepository.save(user);
+        try {
+            // Använd KeyGenerator för att skapa en korrekt AES-nyckel för användaren
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+            keyGenerator.init(256); // 256-bitars nyckel
+            SecretKey generatedSecretKey = keyGenerator.generateKey();
+            // Konvertera SecretKey till Base64-sträng för lagring
+            String secretKey = Base64.getEncoder().encodeToString(generatedSecretKey.getEncoded());
+            // Kryptera användarens unika nyckel med root-nyckeln från KeyStore
+            String encryptedKey = keyStoreUtil.encryptUserSecretKey(secretKey);
+            // Spara den krypterade nyckeln och lösenordet i UserEntity
+            user.setEncryptedKey(encryptedKey);
+            user.setPassword(hashedPassword);
+            // Spara användaren i databasen
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate and encrypt user secret key: " + e.getMessage(), e);
+        }
     }
 
     public String loginUser(String email, String password, HttpSession session) {
@@ -47,10 +57,7 @@ public class UserService {
         if (userEntity == null || !hashing.verifyPassword(password, userEntity.getPassword())) {
             return null;
         }
-
         String encryptedKey = userEntity.getEncryptedKey();
-        System.out.println("User's Encrypted Key: " + encryptedKey);
-
         try {
             // Dekryptera användarens unika nyckel med root-nyckeln
             String decryptedKey = keyStoreUtil.decryptUserSecretKey(encryptedKey);
@@ -61,7 +68,6 @@ public class UserService {
             return jwtUtil.generateToken(userDTO);
 
         } catch (Exception e) {
-            System.out.println("Dekryptering misslyckades: " + e.getMessage());
             return null;
         }
     }

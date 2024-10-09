@@ -18,7 +18,7 @@ public class MessagesEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "message_content")
+    @Column(name = "message_content", columnDefinition = "TEXT")
     private String messageContent;
 
     @ManyToOne(fetch = FetchType.LAZY)

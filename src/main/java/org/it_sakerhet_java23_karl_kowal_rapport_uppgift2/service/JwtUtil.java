@@ -4,7 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpSession;
 import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.dto.UserDTO;
+import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.security.KeyStoreUtil;
 
 import java.security.Key;
 import java.util.Date;
@@ -36,13 +38,12 @@ public class JwtUtil {
     // Validera tokenen
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
-            return true;
+           Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
+           return true;
         } catch (Exception e) {
             return false;
         }
     }
-    // Extrahera användarnamn från tokenen
     public String extractUsername(String token) {
         return getClaims(token).getSubject();
     }

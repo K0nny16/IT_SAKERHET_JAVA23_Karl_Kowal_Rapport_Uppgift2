@@ -1,5 +1,6 @@
 package org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.service;
 
+import org.apache.catalina.User;
 import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.dto.MessageDTO;
 import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.entitys.MessagesEntity;
 import org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.entitys.UserEntity;
@@ -15,26 +16,31 @@ import java.util.stream.Collectors;
 @Service
 public class MessageService {
 
-    @Autowired
-    private MessageRepository messageRepository;
+    private final MessageRepository messageRepository;
+    private final UserRepository userRepository;
+    private final KeyStoreUtil keyStoreUtil;
 
     @Autowired
-    private UserRepository userRepository;
+    public MessageService(MessageRepository messageRepository, UserRepository userRepository, KeyStoreUtil keyStoreUtil){
+       this.messageRepository = messageRepository;
+       this.keyStoreUtil = keyStoreUtil;
+       this.userRepository = userRepository;
+    }
 
-    private KeyStoreUtil keyStoreUtil;
-
-    public boolean saveMessage(MessageDTO messageDTO, String username ) throws Exception {
+    public boolean saveMessage(MessageDTO messageDTO, String username ){
         UserEntity userEntity = userRepository.findByUsername(username);
         if(userEntity == null) return false;
+
         String decryptedKey = keyStoreUtil.decryptUserSecretKey(userEntity.getEncryptedKey());
         String encryptedContent = keyStoreUtil.encryptMessage(messageDTO.getContent(),decryptedKey);
+
         MessagesEntity messagesEntity = new MessagesEntity();
         messagesEntity.setMessageContent(encryptedContent);
         messagesEntity.setUser(userEntity);
         messageRepository.save(messagesEntity);
         return true;
     }
-    public List<MessageDTO> getMessagesForUser(String username) throws Exception {
+    public List<MessageDTO> getMessagesForUser(String username){
         UserEntity userEntity = userRepository.findByUsername(username);
         if(userEntity == null) return null;
         String decryptedKey = keyStoreUtil.decryptUserSecretKey(userEntity.getEncryptedKey());

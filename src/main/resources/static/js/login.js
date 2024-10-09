@@ -1,4 +1,4 @@
-import { saveToken } from './jwt.js';
+import {getToken, saveToken} from './jwt.js';
 document.getElementById('login-form').addEventListener('submit', async function (event) {
     event.preventDefault();
     const email = document.getElementById('email').value;
@@ -16,11 +16,11 @@ document.getElementById('login-form').addEventListener('submit', async function 
             const data = await response.json();
             const jwtToken = data.token;
             saveToken(jwtToken);
-            alert('Inloggning lyckades! JWT har sparats.');
-            //window.location.href = '/messages/write';
+            window.location.href = `/writeMessage?token=${getToken()}`;
         } else {
             const errorData = await response.json();
             alert(errorData.message || 'Inloggning misslyckades. Kontrollera dina uppgifter.');
+            window.location.href = "/login";
         }
     } catch (error) {
         console.error('Ett fel inträffade vid inloggningen:', error);

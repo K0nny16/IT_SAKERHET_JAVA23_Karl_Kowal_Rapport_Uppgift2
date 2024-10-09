@@ -1,16 +1,13 @@
 package org.it_sakerhet_java23_karl_kowal_rapport_uppgift2.security;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class Hashing {
-    private final BCryptPasswordEncoder passwordEncoder;
-    public Hashing(){
-        this.passwordEncoder = new BCryptPasswordEncoder();
+    public String hashPassword(String password) {
+        return BCrypt.hashpw(password, BCrypt.gensalt());
     }
-    public String hashPassword(String password){
-        return passwordEncoder.encode(password);
-    }
-    public boolean verifyPassword(String rawPassword, String hashedPassword){
-        return passwordEncoder.matches(rawPassword,hashedPassword);
+    public boolean verifyPassword(String rawPassword, String hashedPassword) {
+        return BCrypt.checkpw(rawPassword, hashedPassword);
     }
 }
+

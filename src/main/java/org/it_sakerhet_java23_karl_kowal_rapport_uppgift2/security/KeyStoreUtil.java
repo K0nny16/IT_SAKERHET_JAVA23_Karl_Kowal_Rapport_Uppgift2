@@ -73,7 +73,11 @@ public class KeyStoreUtil {
     // Metoder för att kryptera och dekryptera användarmeddelanden
     public String encryptMessage(String message, String secretKey) {
         try {
-            SecretKey userSecretKey = new SecretKeySpec(secretKey.getBytes(), "AES");
+            // Konvertera Base64-strängen till en byte-array
+            byte[] decodedKeyBytes = Base64.getDecoder().decode(secretKey);
+            // Använd byte-arrayen för att skapa en AES SecretKey
+            SecretKey userSecretKey = new SecretKeySpec(decodedKeyBytes, "AES");
+            // Initiera Cipher för kryptering
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.ENCRYPT_MODE, userSecretKey);
             byte[] encryptedMessageBytes = cipher.doFinal(message.getBytes());
@@ -85,7 +89,10 @@ public class KeyStoreUtil {
 
     public String decryptMessage(String encryptedMessage, String secretKey) {
         try {
-            SecretKey userSecretKey = new SecretKeySpec(secretKey.getBytes(), "AES");
+            // Avkoda Base64-strängen till en byte-array för att skapa en SecretKey med rätt längd
+            byte[] decodedKey = Base64.getDecoder().decode(secretKey);
+            SecretKey userSecretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.DECRYPT_MODE, userSecretKey);
             byte[] decodedMessageBytes = Base64.getDecoder().decode(encryptedMessage);

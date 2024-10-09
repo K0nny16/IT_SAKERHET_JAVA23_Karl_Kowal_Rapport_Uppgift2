@@ -2,13 +2,8 @@ import { getToken } from './jwt.js';
 
 async function fetchMessages() {
     const token = getToken();
-    if (!token) {
-        alert('Du måste vara inloggad för att se dina meddelanden.');
-        window.location.href = '/';
-        return;
-    }
     try {
-        const response = await fetch('/api/messages', {
+        const response = await fetch(`/getMessages?token=${token}`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + token,
@@ -19,7 +14,7 @@ async function fetchMessages() {
             const messages = await response.json();
             displayMessages(messages);
         } else {
-            alert('Kunde inte hämta meddelanden. Kontrollera om du är inloggad.');
+            alert('Kunde inte hämta meddelanden.');
         }
     } catch (error) {
         console.error('Fel vid hämtning av meddelanden:', error);
@@ -43,13 +38,8 @@ function displayMessages(messages) {
 }
 async function deleteMessage(messageId) {
     const token = getToken();
-    if (!token) {
-        alert('Du måste vara inloggad för att ta bort meddelanden.');
-        window.location.href = '/';
-        return;
-    }
     try {
-        const response = await fetch(`/api/messages/${messageId}`, {
+        const response = await fetch(`/deleteMessage/${messageId}?token=${token}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': 'Bearer ' + token,
@@ -71,6 +61,6 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 document.getElementById('write-btn').addEventListener('click', () => {
-    window.location.href = '/write-message.html';
+    window.location.href = `/writeMessage?token=${getToken()}`;
 });
 document.addEventListener('DOMContentLoaded', fetchMessages);
